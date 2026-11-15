@@ -423,6 +423,8 @@ p:`【階段 28／30：一鍵更新】
 3. 任何一步失敗：正式檔保持不動，印出失敗原因，並告訴我最近一份備份的檔名
 4. 每一步印出耗時，最後印出總耗時
 5. 建立「一鍵更新.bat」（Windows）與「一鍵更新.command」（Mac），雙擊即可執行，完成後畫面停住
+   - 一定要用虛擬環境的 Python：Windows 寫 .venv\\Scripts\\python scripts\\update.py；Mac 寫 .venv/bin/python scripts/update.py（用系統的 python3 會找不到套件）
+   - Mac 的 .command 第一行是 #!/bin/bash，並執行 chmod +x 一鍵更新.command 讓它可以雙擊
 6. 開啟 Excel 後提醒：若狀態列顯示需要計算，請切換為自動計算
 README 補上使用方式。`,
 c:"Excel 開著也能執行：自動存檔關閉、重建、重新打開，backup 多一份"},
@@ -475,7 +477,7 @@ function render(){
       card.innerHTML = `
         <div class="top"><div class="num">${i}</div><h3>${esc(s.t)}</h3></div>
         <p class="goal">${esc(s.g)}</p>
-        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794739413" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
+        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794739459" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
         <pre id="p${i}">${esc(s.p)}</pre>
         <div class="check">✔ 完成檢查：${esc(s.c)}</div>
         <div class="actions">
