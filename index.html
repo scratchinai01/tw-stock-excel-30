@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code × Excel 台股分析系統｜30 階段複製卡</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f4ef; --card:#fff; --ink:#1f2328; --muted:#6b6f76; --line:#e4e0d6;
+  --up:#d1343a; --down:#1e8f5a; --accent:#1d4e89; --soft:#eef3fa;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:"Noto Sans TC",system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6}
+header{padding:28px 18px 18px;max-width:980px;margin:0 auto}
+.kicker{font-size:13px;color:var(--accent);font-weight:700;letter-spacing:.08em}
+h1{font-size:clamp(22px,5vw,32px);margin:4px 0 8px;font-weight:900;line-height:1.3}
+.sub{color:var(--muted);font-size:15px;margin:0}
+.ticker{display:flex;gap:6px;margin-top:14px;flex-wrap:wrap}
+.ticker span{font-size:12px;padding:3px 9px;border-radius:99px;background:#fff;border:1px solid var(--line)}
+.ticker .u{color:var(--up)} .ticker .d{color:var(--down)}
+main{max-width:980px;margin:0 auto;padding:0 14px 60px}
+.sticky{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 0 10px;border-bottom:1px solid var(--line)}
+.progress{display:flex;align-items:center;gap:10px;font-size:14px;margin-bottom:8px}
+.bar{flex:1;height:8px;background:#e7e2d7;border-radius:9px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--down),var(--accent));transition:width .3s}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips button{flex:none;border:1px solid var(--line);background:#fff;border-radius:99px;padding:6px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--ink)}
+.chips button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.rule{background:var(--soft);border:1px solid #cfdcee;border-radius:14px;padding:14px 16px;margin:16px 0}
+.rule h2{font-size:16px;margin:0 0 6px}
+.rule p{margin:0 0 10px;font-size:14px;color:#3b4552}
+.phase-title{margin:28px 4px 10px;font-size:17px;font-weight:900;display:flex;align-items:center;gap:8px}
+.phase-title small{font-weight:500;color:var(--muted);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px;display:flex;flex-direction:column;gap:8px;transition:opacity .2s}
+.card.done{opacity:.55}
+.card.done .num{background:var(--down)}
+.top{display:flex;align-items:center;gap:10px}
+.num{flex:none;width:34px;height:34px;border-radius:10px;background:var(--accent);color:#fff;font-weight:900;display:grid;place-items:center;font-size:15px}
+.card h3{margin:0;font-size:16px;line-height:1.35}
+.goal{font-size:13px;color:var(--muted);margin:0}
+pre{margin:0;white-space:pre-wrap;word-break:break-word;background:#faf9f6;border:1px dashed #d8d2c4;border-radius:10px;padding:10px 11px;font-family:inherit;font-size:13.5px;line-height:1.65;max-height:220px;overflow:auto}
+.check{font-size:13px;background:#f3faf6;border-left:3px solid var(--down);padding:6px 9px;border-radius:0 8px 8px 0;color:#24563d}
+.actions{display:flex;gap:8px;align-items:center;margin-top:2px}
+.copy{flex:1;border:0;border-radius:10px;padding:10px;font:inherit;font-weight:700;font-size:14px;background:var(--ink);color:#fff;cursor:pointer}
+.copy.ok{background:var(--down)}
+.mark{display:flex;align-items:center;gap:5px;font-size:13px;color:var(--muted);cursor:pointer;user-select:none;white-space:nowrap}
+.mark input{width:18px;height:18px;accent-color:var(--down)}
+footer{text-align:center;color:var(--muted);font-size:13px;padding:20px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:9px 18px;border-radius:99px;font-size:14px;transition:transform .25s;z-index:9}
+.toast.show{transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<header>
+  <div class="kicker">CLAUDE CODE × EXCEL ・ 本機端逐步建置</div>
+  <h1>台股分析 Excel 系統｜30 階段複製卡（v2）</h1>
+  <p class="sub">每張卡片按「複製」，貼到 Claude Code，等它完成、打開 Excel 檢查，再進下一張。技術指標全部用 Excel 公式計算，點儲存格就看得到算法。</p>
+  <div class="ticker"><span>Python</span><span>openpyxl</span><span>pandas</span><span>yfinance</span><span class="u">▲ 漲＝紅</span><span class="d">▼ 跌＝綠</span></div>
+</header>
+<main>
+  <div class="sticky">
+    <div class="progress"><span id="ptext">完成 0 / 30</span><div class="bar"><i id="pbar"></i></div></div>
+    <div class="chips" id="chips"></div>
+  </div>
+
+  <div class="rule">
+    <h2>⓪ 開場規則卡（第一次對話先貼這張）</h2>
+    <p>讓 Claude Code 每一階段都照同樣的節奏做，比較好教也好除錯。</p>
+    <img src="images/rules.jpg" alt="開場規則卡圖解：10 條規則" style="display:block;width:100%;height:auto;border-radius:12px;border:1px solid #cfdcee;margin:0 0 12px">
+    <pre id="rule-text">接下來我們要分 30 個階段，用 Python 在本機建立一份「台股分析 Excel 系統」（stock_system.xlsx）。請遵守以下規則：
+1. 每次只做我貼給你的那一個階段，不要提前做後面的功能。
+2. 程式與註解使用繁體中文說明，Excel 工作表名稱、欄位名稱一律用繁體中文。
+3. Excel 一律由 scripts/build_workbook.py 從頭重建；不要用 load_workbook 讀進既有檔案再存檔（會遺失圖表）。只讀取、不存檔可以。
+4. 存檔一律走 safe_save()：若 stock_system.xlsx 正在 Excel 開啟 → 先備份 → 自動「儲存並關閉」這一個活頁簿（不要用 active workbook，不動其他檔案，絕不按「不儲存」）→ 存成暫存檔 → 檢查 → 舊檔移到 output/backup/（留 5 份）→ 取代正式檔。自動關閉失敗時才停下來提醒我。
+5. 技術指標能用 Excel 公式就用公式。STDEV.P 等新函數要寫成 _xlfn.STDEV.P。
+6. 台股慣例：上漲紅色、下跌綠色。
+7. 檢查用的程式寫成 checks/ 裡的 .py 檔再執行，不要用一長串 python -c。
+8. 遇到網路錯誤（DNS、無法解析主機）先停下來，列出需要允許的網域，等我核准。
+9. 檔案結構檢查通過，不代表 Excel 會正確顯示：有圖表或公式的階段，完成後都請我打開 Excel 實際確認。
+10. 每個階段完成後，用三行告訴我：改了哪些檔案、要執行什麼指令、打開 Excel 要檢查哪裡。
+看懂請回覆「準備好了」，先不要寫任何程式。</pre>
+    <div class="actions" style="margin-top:10px"><button class="copy" data-target="rule-text">複製開場規則</button></div>
+  </div>
+
+<details class="rule" style="background:#fff7ea;border-color:#f0d9b5"><summary style="font-weight:900;cursor:pointer">常見錯誤與解決辦法（19 項）</summary><div style="margin-top:8px"><p style="margin:0 0 8px"><b>Python 版本不足</b>：Mac 內建 3.9 不夠。用 python.org 或 Homebrew 安裝 3.12／3.13，重建 .venv。（階段 2）</p><p style="margin:0 0 8px"><b>安裝檔簽章驗證失敗</b>：停止安裝。重新下載、確認系統時間正確後再驗；仍失敗就改用 Homebrew。（階段 2）</p><p style="margin:0 0 8px"><b>DNS／無法解析主機</b>：網路被限制。核准網路存取，或把 pypi.org、files.pythonhosted.org、Yahoo 財經網域加入允許清單。（階段 3、6、10）</p><p style="margin:0 0 8px"><b>移除筆數看不出原因</b>：空值與零成交量分開計數。（階段 7）</p><p style="margin:0 0 8px"><b>#NAME?</b>：openpyxl 寫入新函數要加前綴：_xlfn.STDEV.P。（階段 16）</p><p style="margin:0 0 8px"><b>圖表消失</b>：不要 load_workbook 舊檔再存檔；Excel 跳出「修復」時不要存檔，重新執行一鍵更新。（規則 3、階段 8）</p><p style="margin:0 0 8px"><b>圖表被 Excel 修復刪除</b>：日期軸要設定 y_axis.crossAx = x_axis.axId。（階段 8、18、25）</p><p style="margin:0 0 8px"><b>均線從 0 跳起</b>：圖表資料範圍從第一筆有效值開始：MA5 第 8 列、MA20 第 23 列、MA60 第 63 列。（階段 12、17）</p><p style="margin:0 0 8px"><b>兩張圖重疊</b>：固定錨點：價格 AE3、成交量 AE28、RSI AE53、KD AE78、MACD AE103、布林 AE128，每張間隔 25 列。（階段 13～18）</p><p style="margin:0 0 8px"><b>MACD 負的柱子變白色</b>：不要用 invertIfNegative；把柱狀體拆成正柱、負柱兩個數列，分別設紅、綠色。（階段 15）</p><p style="margin:0 0 8px"><b>交叉點或突破點被畫在 0</b>：標記用的輔助欄要回傳 NA()，不要回傳 ""。（階段 16、20）</p><p style="margin:0 0 8px"><b>檢查指令語法錯誤</b>：檢查程式寫成 .py 檔再執行。（規則 7）</p><p style="margin:0 0 8px"><b>公式結果沒更新</b>：Excel 在手動計算：「公式」→「計算選項」→「自動」，再按 F9。（階段 5、22）</p><p style="margin:0 0 8px"><b>結構檢查通過但畫面不對</b>：一定要打開 Excel 實際確認。（規則 9）</p><p style="margin:0 0 8px"><b>忘記關 Excel</b>：safe_save() 會先備份，再自動儲存並關閉 stock_system.xlsx（只關這個檔），寫入不會中斷。自動關閉失敗才會停下來提醒。（階段 5、28）</p><p style="margin:0 0 8px"><b>Mac 跳出「控制 Microsoft Excel」權限</b>：第一次自動關閉時出現，到「系統設定」→「隱私權與安全性」→「自動化」允許。（階段 5）</p><p style="margin:0 0 8px"><b>~$ 檔一直在，卻沒開 Excel</b>：上次當機留下的殘留檔，safe_save() 確認 Excel 沒開這個檔後會自動刪除。（階段 5）</p><p style="margin:0 0 8px"><b>更新後回測參數被改回預設</b>：參數以 config.json 為準，更新前自動讀回 Excel 裡改過的參數。（階段 23、28）</p><p style="margin:0 0 8px"><b>更新失敗或檔案壞掉</b>：正式檔不會被動到；到 output/backup/ 拿最近一份備份。（階段 5）</p></div></details>
+  <div id="list"></div>
+</main>
+<footer>設計：智慧未來領袖學苑｜LINE ID：snake0203cheng<br>本工具僅供教學練習，不構成任何投資建議。</footer>
+<div class="toast" id="toast">已複製，貼到 Claude Code 吧！</div>
+
+<script>
+const PHASES = [
+  {id:1, name:"環境準備", range:[1,5]},
+  {id:2, name:"抓取股價資料", range:[6,10]},
+  {id:3, name:"技術指標（Excel 公式）", range:[11,16]},
+  {id:4, name:"圖表與儀表板", range:[17,22]},
+  {id:5, name:"策略回測", range:[23,27]},
+  {id:6, name:"自動化與交付", range:[28,30]},
+];
+
+const S = [
+/* 1 */ {t:"建立專案資料夾", g:"先把專案的家蓋好，還不寫程式。",
+p:`【階段 1／30：建立專案資料夾】
+請在目前資料夾建立「台股分析 Excel 系統」專案：
+- 建立資料夾：data/（放股價 CSV）、scripts/（放 Python 程式）、output/（放產生的 Excel）、output/backup/（自動備份）、checks/（放檢查用的程式）
+- 建立 README.md，寫下專案目標：用 Python 抓台股資料，產生 output/stock_system.xlsx，內含股價、技術指標、圖表、儀表板與回測
+- README 加一段「設計原則」：Excel 一律由 scripts/build_workbook.py 從頭重建，不用 load_workbook 讀進既有檔案再存檔（openpyxl 不會保留原有圖表）
+- 這個階段不要寫任何 Python 程式
+完成後用樹狀圖列出資料夾結構給我看。`,
+c:"看得到 data、scripts、output（含 backup）、checks 資料夾和 README.md"},
+
+/* 2 */ {t:"建立 Python 虛擬環境", g:"避免套件互相打架，每個專案獨立。",
+p:`【階段 2／30：建立 Python 虛擬環境】
+1. 執行 which python3 和 python3 --version，告訴我目前用的是哪一個 Python、版本多少
+2. 需要 3.10 以上，建議 3.12 或 3.13（太新的版本，pandas、numpy 可能還沒支援）。Mac 內建的 3.9 不夠用
+3. 如果版本不夠：先停下來，提供兩種安裝方式（python.org 官方安裝檔、Homebrew），讓我選擇
+4. 若使用官方安裝檔，請用 pkgutil --check-signature 檢查簽章；簽章驗證失敗就停止安裝並回報，不要繼續
+5. 用確認過的 Python 建立 .venv，再用 .venv 裡的 python --version 確認版本
+6. 把 Windows 和 Mac 啟動虛擬環境的指令寫進 README.md 的「環境設定」段落`,
+c:".venv 內的 Python 版本 ≥ 3.10，README 有啟動指令"},
+
+/* 3 */ {t:"安裝需要的套件", g:"openpyxl 寫 Excel、pandas 整理資料、yfinance 抓股價。",
+p:`【階段 3／30：安裝套件】
+在 .venv 虛擬環境中安裝：openpyxl、pandas、yfinance。
+- 建立 requirements.txt 記錄這些套件與實際安裝的版本
+- 如果出現 DNS 或「無法解析主機」錯誤，代表網路被限制：停下來，列出需要允許的網域（例如 pypi.org、files.pythonhosted.org），等我核准後再重試
+- 寫 checks/check_env.py：逐一 import 三個套件並印出版本，最後印出「環境檢查通過」
+- 檢查程式一律寫成 .py 檔再執行，不要用一長串 python -c，避免引號跳脫錯誤
+執行 check_env.py 給我看結果。`,
+c:"終端機印出三個版本號與「環境檢查通過」"},
+
+/* 4 */ {t:"建立設定檔", g:"股票代號、日期集中管理，之後改這裡就好。",
+p:`【階段 4／30：建立設定檔】
+建立 config.json：
+- stocks：股票清單，每檔有代號與中文名稱，先放 2330 台積電、2317 鴻海、2454 聯發科
+- period：抓取期間，預設 "1y"（近一年）
+- output_file："output/stock_system.xlsx"
+- excel_check：true（每次重建後，提醒我打開 Excel 確認）
+- backtest：回測參數 short=5、long=20、capital=1000000、fee=0.001425、tax=0.003（之後回測參數以這裡為準）
+- backup_keep：5（保留最近 5 份備份）
+- excel_autoclose：true（更新時自動儲存並關閉開著的 stock_system.xlsx）
+- excel_autocalc：false（重建後是否自動開啟 → 重算 → 儲存 → 關閉，預設關閉）
+再寫 scripts/config_loader.py，提供讀取設定的函式；直接執行時印出股票清單。設定檔格式錯誤時，要用中文指出是第幾行出錯。`,
+c:"執行 config_loader.py 會列出三檔股票"},
+
+/* 5 */ {t:"建立 Excel 骨架", g:"先把所有工作表建好，之後每階段往裡面填。",
+p:`【階段 5／30：建立 Excel 骨架】
+寫 scripts/build_workbook.py，執行後產生 output/stock_system.xlsx，依序包含工作表：
+首頁、儀表板、股票清單、回測、驗算、說明（各股的「股價_代號」工作表之後再加）
+- 每張工作表 A1 寫上標題（粗體、16 號字）
+- 活頁簿設定：計算模式 = 自動、開啟時完整重算（calcMode="auto"、fullCalcOnLoad=True）
+- 這支程式每次都「從頭重建」整份 Excel，絕對不要 load_workbook 舊檔再存檔
+- 安全存檔，寫成共用函數 safe_save()：
+  1. 處理開著的 Excel（excel_autoclose 為 true 時）：
+     - Mac：用 osascript 執行 AppleScript。先判斷 application "Microsoft Excel" is running（沒開就不要啟動 Excel），再判斷 exists workbook "stock_system.xlsx"；若開著，先把正式檔複製到 output/backup/，再 save workbook "stock_system.xlsx" 並 close workbook "stock_system.xlsx" saving no
+     - Windows：用 pywin32（win32com.client.GetActiveObject("Excel.Application")）找到同一路徑的活頁簿，先備份，再 Save() 和 Close(False)；Excel 沒開就跳過
+     - 一律指名 stock_system.xlsx，不要用 active workbook，不要關其他活頁簿
+     - 若 Excel 沒開但殘留 ~$stock_system.xlsx（上次當機留下），刪除這個殘留檔再繼續
+     - 自動關閉失敗（例如 Excel 跳出對話框、沒有自動化權限）：停止並提醒我手動關閉，正式檔保持不動
+  2. 先存成 output/stock_system_tmp.xlsx
+  3. 檢查暫存檔：能正常開啟、工作表齊全
+  4. 把舊的正式檔移到 output/backup/stock_system_日期時間.xlsx，只保留最近 5 份
+  5. 把暫存檔改名為 stock_system.xlsx（改名前若失敗，正式檔保持不動）
+  6. excel_autocalc 為 true 時（僅 Mac）：用 AppleScript 開啟 → calculate full（若不支援就 delay 等待）→ 儲存 → 關閉，完成後用 checks/ 程式確認圖表數量沒有減少
+- Mac 第一次執行時，系統會詢問是否允許控制 Microsoft Excel：請到「系統設定」→「隱私權與安全性」→「自動化」允許
+執行後告訴我：打開 Excel 要檢查什麼，以及如果狀態列出現「計算」字樣，要到「公式」索引標籤 →「計算選項」→「自動」。`,
+c:"看到 6 張工作表；Excel 開著時再執行一次，會自動存檔關閉並完成重建，backup 多一份"},
+
+/* 6 */ {t:"抓第一檔股票", g:"先只抓台積電，確認資料抓得到。",
+p:`【階段 6／30：抓取單一股票日 K】
+寫 scripts/fetch_data.py：
+- 用 yfinance 抓 2330.TW（台積電）近一年的日 K：開盤、最高、最低、收盤、成交量
+- 存成 data/2330.csv
+- 印出資料筆數、第一天與最後一天的日期、最後 5 筆
+- 筆數合理範圍約 230～250 筆；不在範圍內要提出警告
+- 若出現 DNS 或連線錯誤：停下來，列出被擋的網域，等我核准網路存取後再重試
+這個階段先不要動 Excel。`,
+c:"data/2330.csv 存在，筆數約 230～250"},
+
+/* 7 */ {t:"資料清理與中文化", g:"讓欄位和數字變成老師、學生看得懂的樣子。",
+p:`【階段 7／30：資料清理】
+修改 fetch_data.py，在存檔前清理資料：
+- 欄位改中文：日期、開盤價、最高價、最低價、收盤價、成交量（張）
+- 日期只保留 YYYY-MM-DD，移除時區
+- 成交量從「股」換算成「張」（除以 1000，取整數）
+- 價格四捨五入到小數 2 位（計算指標時用原始值，最後才四捨五入）
+- 移除無效列，並「分開計數」印出：空值幾筆、成交量為 0 幾筆、清理前後各幾筆
+重新執行並印出前 5 筆給我看。`,
+c:"CSV 欄位是中文、成交量單位是張，並列出移除原因與筆數"},
+
+/* 8 */ {t:"股價寫入 Excel＋第一張走勢圖", g:"把 CSV 放進工作表，並畫出第一張收盤價走勢圖。",
+p:`【階段 8／30：股價資料寫入 Excel】
+擴充 build_workbook.py：讀取 data/2330.csv，建立「股價_2330」工作表。
+- 第 1 列標題「2330 台積電 日 K 資料」，第 3 列表頭，第 4 列開始放資料（第 k 筆資料在第 k+3 列）
+- 表頭深藍底白字、粗體、置中；凍結窗格在 A4
+- 成交量千分位、價格 2 位小數、自動調整欄寬
+- 插入第一張圖：收盤價折線圖，錨點 AE3，標題「2330 台積電 收盤價走勢」，寬約 25 cm、高約 12 cm
+  - 日期軸若用 DateAxis，必須設定 chart.y_axis.crossAx = chart.x_axis.axId，否則 Excel 會「修復」並刪掉圖表
+  - 圖表程式寫成函數 add_price_chart()，第 17 階段會再加上均線
+重建 Excel（記得檢查 Excel 是否開著）後：1. 用 checks/ 程式確認檔案內有 1 張圖表；2. 請我打開 Excel 實際確認圖表顯示。`,
+c:"表頭固定、數字有千分位，在 Excel 中看到收盤價走勢圖"},
+
+/* 9 */ {t:"多檔股票", g:"依照 config.json 一次抓全部股票。",
+p:`【階段 9／30：多檔股票】
+1. fetch_data.py：依 config.json 逐檔抓取，存成 data/代號.csv
+2. build_workbook.py：每檔各建一張「股價_代號」工作表，格式與階段 8 相同，每張都用 add_price_chart() 畫收盤價走勢圖（之後的指標圖也會自動套用到每檔股票）
+3. 「股票清單」工作表：代號、名稱、資料筆數、最新收盤價、最新日期
+4. 三檔的資料筆數若不一致，在終端機提出警告（可能漏抓）
+執行抓資料與重建 Excel。`,
+c:"三張股價工作表各有走勢圖＋股票清單，筆數一致"},
+
+/* 10 */ {t:"錯誤處理", g:"網路斷線或代號打錯，也不能整個當掉。",
+p:`【階段 10／30：錯誤處理】
+強化 fetch_data.py：
+- 某檔抓取失敗（代號錯誤、網路中斷、沒有資料）時，印出清楚的中文訊息，繼續抓下一檔
+- DNS／無法解析主機的錯誤要另外標示「網路被限制」，和「代號錯誤」分開
+- 抓不到但 data/ 有舊 CSV 時，沿用舊資料並提醒「使用舊資料（日期：…）」
+- 每次結果寫入 data/fetch_log.txt（時間、代號、成功或失敗、原因、筆數）
+請在 config.json 加入錯誤代號 9999 測試，測完再移除。`,
+c:"9999 失敗時有中文訊息，其他股票照常完成"},
+
+/* 11 */ {t:"漲跌與漲跌幅", g:"第一個 Excel 公式欄位，從最簡單的開始。",
+p:`【階段 11／30：漲跌與漲跌幅（Excel 公式）】
+在每張「股價_代號」工作表新增兩欄，用 Excel 公式（不要寫入算好的數字）：
+- 漲跌 = 今日收盤 − 前一日收盤（第一筆留空）
+- 漲跌幅 = 漲跌 ÷ 前一日收盤，百分比格式、2 位小數
+- 「說明」工作表新增一列，寫出公式的白話解釋
+修改 build_workbook.py 後重建 Excel，告訴我點哪個儲存格看得到公式。`,
+c:"點漲跌欄，公式列看到 =收盤−前日收盤"},
+
+/* 12 */ {t:"移動平均線 MA", g:"MA5、MA20、MA60，最常見的技術指標。",
+p:`【階段 12／30：移動平均線（Excel 公式）】
+新增 MA5、MA20、MA60 三欄，用 AVERAGE 公式計算最近 N 日收盤價平均。
+- 資料不足 N 日的列用 IF 顯示空白 ""
+- 在程式裡記下每條均線「第一筆有效值」的列號（MA5 第 8 列、MA20 第 23 列、MA60 第 63 列），之後畫圖要用
+- 「說明」補上 MA 的意義與遞推公式：新 MA = 舊 MA + (今日收盤 − N 天前收盤) ÷ N
+重建後，挑一個日期教我用計算機手算 MA5 驗證。`,
+c:"MA20 前 19 列空白，第 23 列開始有數字"},
+
+/* 13 */ {t:"RSI 相對強弱指標", g:"用輔助欄位拆解步驟，學生看得懂每一步。",
+p:`【階段 13／30：RSI14（Excel 公式）】
+用輔助欄位分步驟計算，全部是 Excel 公式：
+1. 上漲幅度 = MAX(漲跌, 0)
+2. 下跌幅度 = MAX(−漲跌, 0)
+3. 14 日平均漲幅、14 日平均跌幅（AVERAGE）
+4. RSI14 = 平均漲幅 ÷ (平均漲幅 + 平均跌幅) × 100；分母為 0 時設為 50
+- 輔助欄位表頭用淺灰色
+- 「說明」補上：RSI > 70 偏熱、< 30 偏冷，並證明 RSI 一定在 0～100 之間
+- 畫 RSI 圖（錨點 AE53，寬度與價格圖相同，日期上下對齊）：
+  - 寫成共用函數 add_indicator_chart(ws, 標題, 數列, 錨點, y_min, y_max, 參考線)，之後的指標圖都用它
+  - RSI14 從第一筆有效值（第 18 列）開始；Y 軸固定 0～100
+  - 70、30 參考線：在指標欄位後面新增「圖表輔助」欄（表頭灰色），填常數 70 與 30，畫成灰色虛線
+  - 設定 y_axis.crossAx = x_axis.axId
+重建後，用 checks/ 裡的 .py 程式檢查 RSI 欄有沒有超出 0～100 或錯誤值，並確認圖表數量；再請我打開 Excel 看 RSI 圖。`,
+c:"RSI 都在 0～100、沒有 #DIV/0!，Excel 中看到 RSI 圖和 70／30 線"},
+
+/* 14 */ {t:"KD 隨機指標", g:"台灣投資人最熟悉的指標，有遞迴公式可教。",
+p:`【階段 14／30：KD 指標 9,3,3（Excel 公式）】
+1. 9 日最高價（MAX）、9 日最低價（MIN）
+2. RSV = (收盤 − 9 日最低) ÷ (9 日最高 − 9 日最低) × 100；分母為 0 時取 50
+3. K = 前一日 K × 2/3 + RSV × 1/3；第一個 K 寫成 =50*2/3+RSV*1/3
+4. D = 前一日 D × 2/3 + K × 1/3；第一個 D 同樣以 50 起算
+- 欄位接在 RSI14 後面：9 日最高、9 日最低、RSV、K、D；9 日最高用「最高價」欄，9 日最低用「最低價」欄（不要和開盤價搞混）
+- 畫 KD 圖（錨點 AE78）：用 add_indicator_chart()，K、D 兩條線從第一筆有效值開始，Y 軸 0～100，加上 80、20 灰色虛線參考線
+「說明」解釋遞迴，以及權重 1/3、2/9、4/27……是等比級數、總和為 1。
+重建後，請挑連續 3 列，用計算機手算 K、D 驗證。`,
+c:"K、D 在 0～100、手算吻合，Excel 中看到 KD 圖"},
+
+/* 15 */ {t:"MACD", g:"指數移動平均 EMA，適合教「權重」的概念。",
+p:`【階段 15／30：MACD（Excel 公式）】
+1. EMA12：第一筆 = 收盤價，之後 = 前一日 EMA12 × 11/13 + 收盤 × 2/13
+2. EMA26：係數 25/27 與 2/27
+3. DIF = EMA12 − EMA26
+4. MACD 訊號線 = DIF 的 9 日 EMA（8/10、2/10）
+5. 柱狀體 = DIF − MACD；用條件式格式，正數紅色、負數綠色
+- 畫 MACD 圖（錨點 AE103）：長條＋折線組合圖
+  - 柱狀體拆成兩個輔助欄：正柱 = MAX(柱狀體,0)、負柱 = MIN(柱狀體,0)，分別設成紅色、綠色長條，重疊比例 100%（不要用 invertIfNegative，負數會變白色）
+  - DIF、MACD 畫成折線，和長條共用座標軸
+  - 加一條 0 軸參考線；設定 y_axis.crossAx = x_axis.axId
+「說明」比較 EMA 與 MA，並推導 α = 2/(N+1)；說明 DIF 由負轉正，代表短期平均超過長期平均。`,
+c:"柱狀體正數紅色、負數綠色；Excel 中看到 MACD 組合圖"},
+
+/* 16 */ {t:"布林通道", g:"用標準差畫出價格的「正常範圍」。",
+p:`【階段 16／30：布林通道（Excel 公式）】
+新增：中軌 = MA20；上軌 = 中軌 + 2 × 20 日標準差；下軌 = 中軌 − 2 × 20 日標準差
+- 重要：用 openpyxl 寫入時，STDEV.P 必須寫成 _xlfn.STDEV.P(...)，否則 Excel 會顯示 #NAME?
+- 其他 Excel 2010 以後的新函數（STDEV.S、IFS、XLOOKUP 等）也一樣要加 _xlfn.
+- 再新增「通道位置」：高於上軌顯示「突破上軌」、低於下軌顯示「跌破下軌」
+- 用 checks/ 的程式掃描整份檔案，確認沒有 #NAME? 或其他錯誤值
+- 畫布林通道圖（錨點 AE128）：收盤價（深色實線）、上軌與下軌（藍色）、中軌（藍色虛線），全部從第 23 列（第一筆有效值）開始
+- 突破點：新增輔助欄「通道外收盤」= IF(通道位置="","",收盤價) 的寫法會被畫成 0，請改用 =IF(通道位置="",NA(),收盤價)，畫成只有紅色圓點、沒有線的數列；用條件式格式把 #N/A 字色設成淺灰
+「說明」用常態分配解釋 2 個標準差，並統計實際有幾 % 的日子在通道外，和理論值 4.55% 比較。`,
+c:"上下軌有數字、沒有 #NAME?；Excel 中看到布林通道圖與紅色突破點"},
+
+/* 17 */ {t:"走勢圖加上均線", g:"在第 8 階段的走勢圖上，加上三條移動平均線。",
+p:`【階段 17／30：收盤價＋均線折線圖】
+擴充第 8 階段的 add_price_chart()，不要另外新增一張圖：
+- 在同一張收盤價折線圖（錨點 AE3）加上 MA5、MA20、MA60 三條線
+- 標題改成「代號 名稱 收盤價與移動平均線」，所有「股價_代號」工作表都套用
+- 每條均線的資料範圍從「第一筆有效值」開始（MA5 第 8 列、MA20 第 23 列、MA60 第 63 列），避免空白被畫成 0
+- 保留 y_axis.crossAx = x_axis.axId 的設定
+- 繪圖區留空間給圖例
+「說明」補上：價格換算成圖表高度是線性映射，並比較加上均線前後的差別。
+重建後：1. 用 checks/ 程式確認檔案內有圖表；2. 請我打開 Excel 實際確認圖表顯示（檔案結構正確不代表 Excel 會正常顯示）。`,
+c:"在 Excel 中實際看到四條線，均線沒有從 0 跳起"},
+
+/* 18 */ {t:"成交量圖", g:"價量要一起看。",
+p:`【階段 18／30：成交量長條圖】
+在每張「股價_代號」工作表，於折線圖下方插入成交量長條圖（錨點 AE28）：
+- 數列：成交量（張）；寬度與上方圖相同，讓日期上下對齊
+- 兩張圖之間留空，不要壓到上方圖例
+- 同樣要設定 y_axis.crossAx = x_axis.axId
+- 標題「代號 名稱 成交量（張）」
+重建後確認兩張圖都存在，並請我打開 Excel 檢查間距。`,
+c:"成交量圖在價格圖下方、寬度一致、不重疊"},
+
+/* 19 */ {t:"漲紅跌綠", g:"用條件式格式讓表格有台股看盤的感覺。",
+p:`【階段 19／30：條件式格式（漲紅跌綠）】
+用 Excel 條件式格式（不是直接改字色），套用在每張股價工作表：
+- 漲跌、漲跌幅：正數紅字、負數綠字、0 黑字
+- 漲跌幅 ≥ 5%：淺紅底；≤ −5%：淺綠底（注意等號：剛好 5% 也要上色）
+- RSI > 70 淺紅底、< 30 淺綠底
+資料更新後顏色要自動跟著變。`,
+c:"漲的日子紅字、跌的日子綠字"},
+
+/* 20 */ {t:"交叉訊號", g:"把黃金交叉、死亡交叉自動標出來。",
+p:`【階段 20／30：均線交叉訊號】
+新增「訊號」欄，用 Excel 公式判斷：
+- 黃金交叉：昨天 MA5 ≤ MA20，且今天 MA5 > MA20
+- 死亡交叉：昨天 MA5 ≥ MA20，且今天 MA5 < MA20
+- MA20 還是空白的列，訊號也要留空（用 IF 先判斷，避免把空白當成 0）
+條件式格式：黃金交叉金黃底、死亡交叉灰底。
+「股票清單」新增「近 20 日訊號次數」（COUNTIF）。
+- 在第 8、17 階段的價格圖（AE3）標出交叉點：
+  - 新增兩個輔助欄：黃金交叉點 = IF(訊號="黃金交叉",MA5,NA())、死亡交叉點 = IF(訊號="死亡交叉",MA5,NA())
+  - 畫成只有標記、沒有線的數列：黃金交叉用金黃色向上三角形，死亡交叉用灰色向下三角形
+  - NA() 會讓圖表跳過該點；#N/A 用條件式格式把字色設成淺灰
+- 「說明」補上：交叉就是差值 d = MA5 − MA20 變號`,
+c:"訊號欄有底色；價格圖上的交叉點和訊號欄的日期一致"},
+
+/* 21 */ {t:"互動儀表板", g:"下拉選股票，關鍵數字自動跳出來。",
+p:`【階段 21／30：儀表板】
+在「儀表板」工作表建立：
+1. B3 下拉選單（資料驗證），選項為所有股票代號
+2. 用 INDIRECT 搭配 INDEX／MATCH 取出所選股票最新一天的：日期、收盤價、漲跌、漲跌幅、MA20、RSI14、K、D、最新訊號
+   - 工作表名稱要加單引號：INDIRECT("'股價_"&B3&"'!E:E")
+3. 版面做成數字卡片：標籤小字、數值大字
+4. RSI、KD 旁加白話判讀（偏熱／中性／偏冷），用 IF
+不使用巨集。重建後教我怎麼切換股票。`,
+c:"下拉換股票，所有數字跟著變"},
+
+/* 22 */ {t:"首頁與操作說明", g:"讓第一次打開的人知道怎麼用。",
+p:`【階段 22／30：首頁】
+設計「首頁」工作表：
+- 大標題、最後更新時間（Python 寫入）
+- 操作三步驟：1. 執行一鍵更新 2. 到儀表板選股票 3. 到各股工作表看圖表
+- 疑難排解小提示：狀態列出現「計算」→「公式」→「計算選項」→「自動」；圖表不見 → 重新執行一鍵更新，不要手動修復後存檔
+- 工作表目錄：每張一列，內部超連結（例如 #'儀表板'!A1）＋用途說明
+- 圖表導覽：每檔股票一列，連結到各張圖的位置（價格 AE3、成交量 AE28、RSI AE53、KD AE78、MACD AE103、布林 AE128）
+- 底部免責聲明：本系統僅供教學，不構成投資建議
+打開 Excel 時預設停在首頁。`,
+c:"打開先看到首頁，點目錄可以跳頁"},
+
+/* 23 */ {t:"回測參數區", g:"把策略規則變成可以改的儲存格。",
+p:`【階段 23／30：回測參數區】
+在「回測」工作表上方建立參數區（淺黃底，表示可修改），數值來自 config.json 的 backtest：
+- 回測股票代號（下拉選單）
+- 短均線天數 5、長均線天數 20
+- 初始資金 1,000,000 元
+- 手續費率 0.1425%、證交稅率 0.3%（賣出時收）
+- 策略說明：短均線向上穿越長均線買進，向下穿越賣出，一次全數買賣（以整張計）
+- 保留我在 Excel 改過的參數：重建前，用 load_workbook(data_only=False, read_only=True) 只「讀取」舊檔的參數格（不存檔），和 config.json 不同時，更新 config.json 並印出「沿用 Excel 參數：短均線 5 → 10」
+- 讀取失敗（例如舊檔不存在）就直接用 config.json
+「說明」補上來回成本 0.585% 與損益兩平漲幅的計算。`,
+c:"把短均線改成 10、存檔、執行更新後，仍然是 10"},
+
+/* 24 */ {t:"持倉與交易紀錄", g:"逐日判斷：現在手上有沒有股票？",
+p:`【階段 24／30：回測持倉】
+參數區下方建立逐日明細（Python 只寫入日期與收盤價，其餘用公式）：
+- 短均線、長均線：AVERAGE＋OFFSET，天數參照參數區；資料不足時留空
+- 動作：買進、賣出或空白（買進前檢查目前空手，賣出前檢查目前持有）
+- 持倉狀態：1 持有、0 空手（參照前一日狀態與今日動作）
+- 「持有」的列用條件式格式淡紅底
+重建後，把短均線改成 10，確認動作欄會自動重算。`,
+c:"短均線改成 10，動作欄自動改變"},
+
+/* 25 */ {t:"資金與報酬", g:"算出每天的總資產變化。",
+p:`【階段 25／30：資金曲線】
+逐日明細新增（全部用公式）：
+- 現金、持有股數：買進股數 = INT(現金 ÷ (收盤 × (1+手續費率)) ÷ 1000) × 1000
+- 交易成本：買進收手續費；賣出收手續費＋證交稅
+- 總資產 = 現金 + 股數 × 收盤價；累積報酬率 = 總資產 ÷ 初始資金 − 1
+- 插入「總資產」折線圖，記得設定 y_axis.crossAx = x_axis.axId
+「說明」補上：整張限制造成資金閒置的比例。`,
+c:"總資產第一天等於初始資金，圖表在 Excel 中正常顯示"},
+
+/* 26 */ {t:"績效指標", g:"用數字評估策略好不好。",
+p:`【階段 26／30：績效摘要】
+參數區右邊建立績效摘要，全部用公式：
+- 總報酬率；年化報酬率 = (1+總報酬)^(240 ÷ 交易日間隔數) − 1
+- 最大回撤：新增「歷史最高資產」欄與「回撤 %」欄，取最小值
+- 交易次數、勝率（新增輔助欄記錄每筆交易損益）、總交易成本
+「說明」解釋最大回撤，以及「勝率高不代表一定賺錢」的期望值概念。`,
+c:"績效摘要都有值，沒有錯誤"},
+
+/* 27 */ {t:"和買進持有比較", g:"策略有沒有贏過「買了就放著」？",
+p:`【階段 27／30：對照組比較】
+新增「買進持有」對照組：第一天以整張買進（扣手續費），之後一直持有。
+- 逐日明細新增「買進持有總資產」欄
+- 績效摘要並排比較：總報酬、最大回撤、報酬 ÷ 最大回撤
+- 總資產折線圖加入第二條線
+- 自動結論句：「本期均線策略 勝過／落後 買進持有 X.XX 個百分點」（用「百分點」，不要寫成 %）
+完成後換成 2317、2454 各看一次。`,
+c:"圖上有兩條資產曲線，結論句會自動變"},
+
+/* 28 */ {t:"一鍵更新", g:"以後雙擊一下，資料和 Excel 全部更新。",
+p:`【階段 28／30：一鍵更新】
+1. scripts/update.py 依序執行：
+   自動儲存並關閉開著的 stock_system.xlsx → 讀回 Excel 中的回測參數 → 抓資料 → 驗算計算 → 重建（safe_save：暫存檔 → 檢查 → 備份 → 取代）→ 打開 Excel
+2. 自動關閉只處理 stock_system.xlsx，其他活頁簿保持開啟；自動關閉失敗才停止並提醒我手動關閉，絕不按「不儲存」
+3. 任何一步失敗：正式檔保持不動，印出失敗原因，並告訴我最近一份備份的檔名
+4. 每一步印出耗時，最後印出總耗時
+5. 建立「一鍵更新.bat」（Windows）與「一鍵更新.command」（Mac），雙擊即可執行，完成後畫面停住
+6. 開啟 Excel 後提醒：若狀態列顯示需要計算，請切換為自動計算
+README 補上使用方式。`,
+c:"Excel 開著也能執行：自動存檔關閉、重建、重新打開，backup 多一份"},
+
+/* 29 */ {t:"驗算公式", g:"用 Python 重算，對照 Excel 公式有沒有寫錯。",
+p:`【階段 29／30：驗算】
+1. scripts/verify.py：用 pandas 獨立重算 2330 的 MA20、RSI14、K、D、DIF，存成 data/verify_2330.csv（不要直接修改 xlsx）
+2. build_workbook.py 讀取這份 CSV，建立「驗算」工作表：Python 值、參照 Excel 公式儲存格、差異（ABS 公式）
+3. 最上方用公式顯示最大差異；小於 0.01 顯示「驗算通過」，否則顯示「請檢查」
+4. EMA、KD 前段因起始值不同而有差異是正常的：比較時跳過前 30 筆，並在說明中寫出誤差會依 (11/13)ⁿ、(2/3)ⁿ 衰減
+5. checks/ 新增掃描程式：列出整份檔案所有錯誤值（#NAME?、#DIV/0!、#REF!）；「圖表輔助」欄刻意使用的 #N/A 不算錯誤，並確認每張股價工作表有 6 張圖
+update.py 的順序：抓資料 → verify.py → 重建 Excel。`,
+c:"驗算工作表顯示「驗算通過」，掃描沒有錯誤值"},
+
+/* 30 */ {t:"教學版整理交付", g:"整理成可以發給學員的版本。",
+p:`【階段 30／30：教學版整理】
+1. 檢查所有程式，補齊繁體中文註解，刪掉沒用到的程式碼
+2. 「說明」工作表整理成：指標、公式、白話解釋、數學概念
+3. README 改寫成學員手冊：安裝 → 第一次執行 → 加股票 → 常見錯誤排除（至少包含：Python 版本不足、網路被限制、#NAME?、圖表消失、手動計算模式）
+4. 學員練習版：在 build_workbook.py 加參數 --practice，從頭產生 output/stock_system_練習版.xlsx（MA、RSI、KD 公式欄留空、保留表頭），同樣使用 safe_save()。不要複製完整版再用 load_workbook 修改，以免圖表遺失
+5. 兩份檔案都請我打開 Excel 確認圖表與公式；最後列出專案所有檔案與用途。`,
+c:"output 裡有完整版與練習版，兩份都看得到圖表"},
+
+];
+
+const IMGS = [1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15, 16, 17];
+const KEY = "stock30-done-v2";
+let done = new Set();
+try{ done = new Set(JSON.parse(localStorage.getItem(KEY) || "[]")); }catch(e){}
+const save = () => { try{ localStorage.setItem(KEY, JSON.stringify([...done])); }catch(e){} };
+
+const list = document.getElementById("list");
+const chips = document.getElementById("chips");
+let filter = 0;
+
+function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+
+function render(){
+  list.innerHTML = "";
+  PHASES.forEach(ph=>{
+    if(filter && filter!==ph.id) return;
+    const sec = document.createElement("section");
+    const n = ph.range[1]-ph.range[0]+1;
+    sec.innerHTML = `<div class="phase-title">第 ${ph.id} 部分｜${ph.name} <small>階段 ${ph.range[0]}–${ph.range[1]}・共 ${n} 張</small></div><div class="grid"></div>`;
+    const grid = sec.querySelector(".grid");
+    for(let i=ph.range[0]; i<=ph.range[1]; i++){
+      const s = S[i-1];
+      const card = document.createElement("article");
+      card.className = "card" + (done.has(i) ? " done" : "");
+      card.innerHTML = `
+        <div class="top"><div class="num">${i}</div><h3>${esc(s.t)}</h3></div>
+        <p class="goal">${esc(s.g)}</p>
+        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794653410" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
+        <pre id="p${i}">${esc(s.p)}</pre>
+        <div class="check">✔ 完成檢查：${esc(s.c)}</div>
+        <div class="actions">
+          <button class="copy" data-target="p${i}">複製階段 ${i}</button>
+          <label class="mark"><input type="checkbox" data-i="${i}" ${done.has(i)?"checked":""}>完成</label>
+        </div>`;
+      grid.appendChild(card);
+    }
+    list.appendChild(sec);
+  });
+  updateProgress();
+}
+
+function updateProgress(){
+  document.getElementById("ptext").textContent = `完成 ${done.size} / 30`;
+  document.getElementById("pbar").style.width = (done.size/30*100)+"%";
+}
+
+function renderChips(){
+  const all = [{id:0,name:"全部"}, ...PHASES];
+  chips.innerHTML = all.map(p=>`<button data-f="${p.id}" class="${p.id===filter?"on":""}">${p.id?p.id+"．":""}${p.name}</button>`).join("");
+}
+
+chips.addEventListener("click", e=>{
+  const b = e.target.closest("button"); if(!b) return;
+  filter = +b.dataset.f; renderChips(); render();
+});
+
+const toast = document.getElementById("toast");
+function showToast(msg){ toast.textContent = msg; toast.classList.add("show"); clearTimeout(showToast.t); showToast.t = setTimeout(()=>toast.classList.remove("show"), 1600); }
+
+function fallbackCopy(text){
+  const ta = document.createElement("textarea");
+  ta.value = text; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select();
+  let ok = false; try{ ok = document.execCommand("copy"); }catch(e){}
+  document.body.removeChild(ta); return ok;
+}
+
+document.addEventListener("click", async e=>{
+  const b = e.target.closest(".copy"); if(!b) return;
+  const text = document.getElementById(b.dataset.target).textContent;
+  let ok = false;
+  try{ await navigator.clipboard.writeText(text); ok = true; }catch(err){ ok = fallbackCopy(text); }
+  if(ok){
+    const old = b.textContent; b.textContent = "✓ 已複製"; b.classList.add("ok");
+    setTimeout(()=>{ b.textContent = old; b.classList.remove("ok"); }, 1400);
+    showToast("已複製，貼到 Claude Code 吧！");
+  }else{
+    const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.target));
+    const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+    showToast("已幫你選取文字，請長按複製");
+  }
+});
+
+document.addEventListener("change", e=>{
+  const cb = e.target.closest("input[data-i]"); if(!cb) return;
+  const i = +cb.dataset.i;
+  cb.checked ? done.add(i) : done.delete(i);
+  save();
+  cb.closest(".card").classList.toggle("done", cb.checked);
+  updateProgress();
+});
+
+renderChips(); render();
+</script>
+</body>
+</html>
