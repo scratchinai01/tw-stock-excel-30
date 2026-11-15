@@ -330,7 +330,7 @@ p:`【階段 20／30：均線交叉訊號】
 新增「訊號」欄，用 Excel 公式判斷：
 - 黃金交叉：昨天 MA5 ≤ MA20，且今天 MA5 > MA20
 - 死亡交叉：昨天 MA5 ≥ MA20，且今天 MA5 < MA20
-- MA20 還是空白的列，訊號也要留空（用 IF 先判斷，避免把空白當成 0）
+- 今天或前一天的 MA5、MA20 任一個是空白，訊號就留空：=IF(OR(I3="",J3="",I4="",J4=""),"",…)。Excel 比大小時會把空白文字 "" 當成比任何數字都大，只檢查今天的話，MA20 第一個有值的那天會出現假的黃金交叉
 條件式格式：黃金交叉金黃底、死亡交叉灰底。
 「股票清單」新增「近 20 日訊號次數」（COUNTIF）。
 - 在第 8、17 階段的價格圖（AE3）標出交叉點：
@@ -380,7 +380,7 @@ c:"把短均線改成 10、存檔、執行更新後，仍然是 10"},
 p:`【階段 24／30：回測持倉】
 參數區下方建立逐日明細（Python 只寫入日期與收盤價，其餘用公式）：
 - 短均線、長均線：AVERAGE＋OFFSET，天數參照參數區；資料不足時留空
-- 動作：買進、賣出或空白（買進前檢查目前空手，賣出前檢查目前持有）
+- 動作：買進、賣出或空白（買進前檢查目前空手，賣出前檢查目前持有）；今天或前一天的短、長均線任一個是空白，動作就留空，避免長均線剛出現的那天產生假的買進
 - 持倉狀態：1 持有、0 空手（參照前一日狀態與今日動作）
 - 「持有」的列用條件式格式淡紅底
 重建後，把短均線改成 10，確認動作欄會自動重算。`,
@@ -475,7 +475,7 @@ function render(){
       card.innerHTML = `
         <div class="top"><div class="num">${i}</div><h3>${esc(s.t)}</h3></div>
         <p class="goal">${esc(s.g)}</p>
-        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794737366" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
+        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794737802" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
         <pre id="p${i}">${esc(s.p)}</pre>
         <div class="check">✔ 完成檢查：${esc(s.c)}</div>
         <div class="actions">
