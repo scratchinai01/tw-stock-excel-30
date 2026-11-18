@@ -60,7 +60,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px}
 <header>
   <div class="kicker">CLAUDE CODE × EXCEL ・ 本機端逐步建置</div>
   <h1>台股分析 Excel 系統｜30 階段複製卡（v2）</h1>
-  <p class="sub">每張卡片按「複製」，貼到 Claude Code，等它完成、打開 Excel 檢查，再進下一張。技術指標全部用 Excel 公式計算，點儲存格就看得到算法。</p>
+  <p class="sub">每張卡片按「複製」，貼到你的 AI 工具（Antigravity、Codex 或 Claude Code），等它完成、打開 Excel 檢查，再進下一張。技術指標全部用 Excel 公式計算，點儲存格就看得到算法。</p>
   <div class="ticker"><span>Python</span><span>openpyxl</span><span>pandas</span><span>yfinance</span><span class="u">▲ 漲＝紅</span><span class="d">▼ 跌＝綠</span></div>
 </header>
 <main>
@@ -72,13 +72,11 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px}
   <div class="rule">
     <h2>⓪ 開場：下載專案資料夾（規則已內建）</h2>
     <p>資料夾和 10 條規則都已經準備好，學員不用手動建資料夾，也不用先貼規則。</p>
-    <a class="dl" href="https://tw-stock-excel-30.web.app/starter/tw-stock-excel-starter.zip" target="_blank" rel="noopener">⬇ 下載開場資料夾（zip）</a>
-    <ol class="steps"><li>按上方按鈕下載 <b>tw-stock-excel-starter.zip</b></li><li>雙擊解壓縮，把 <b>stock-excel-system</b> 資料夾放到桌面</li><li>打開終端機，輸入下面的指令，啟動 Claude Code</li><li>複製貼上「階段 1」卡片，Claude Code 會讀取 CLAUDE.md 的規則並回覆「準備好了」</li></ol>
-    <pre class="cmd">cd ~/Desktop/stock-excel-system
-claude</pre>
-    <p class="small">Windows 的終端機輸入：<code>cd %USERPROFILE%\Desktop\stock-excel-system</code>，再輸入 <code>claude</code>。</p>
+    <a class="dl" href="https://tw-stock-excel-30.web.app/starter/tw-stock-excel-starter.zip?v=2" target="_blank" rel="noopener">⬇ 下載開場資料夾（zip）</a>
+    <ol class="steps"><li>按上方綠色按鈕，下載 <b>tw-stock-excel-starter.zip</b></li><li>解壓縮：Mac 在 zip 上<b>點兩下</b>；Windows 在 zip 上按右鍵 →「<b>全部解壓縮</b>」。把解出來的 <b>stock-excel-system</b> 資料夾放到桌面</li><li>用你的 AI 工具<b>打開這個資料夾</b>：Antigravity 選「File」→「Open Folder」；Codex、Claude Code 選擇這個資料夾作為工作資料夾</li><li>複製貼上「階段 1」卡片，AI 會讀取規則並回覆「準備好了」</li></ol>
+    <p class="small">全程不需要終端機。之後需要執行的指令，都會由 AI 代為執行。</p>
     <img src="images/rules.jpg" alt="開場規則卡圖解：10 條規則" style="display:block;width:100%;height:auto;border-radius:12px;border:1px solid #cfdcee;margin:0 0 12px">
-    <p class="small" style="margin-top:12px">資料夾裡的 <b>CLAUDE.md</b> 已經寫好下面 10 條規則，Claude Code 會自動讀取。改用 Antigravity、Gemini 等其他工具時，才需要複製這段規則貼上。</p>
+    <p class="small" style="margin-top:12px">資料夾裡的 <b>AGENTS.md</b>、<b>CLAUDE.md</b>、<b>GEMINI.md</b> 都已經寫好下面 10 條規則（內容相同，給不同 AI 工具讀取），階段 1 也會請 AI 主動讀一次。萬一你的工具沒照規則做，再複製這段規則貼上。</p>
     <pre id="rule-text">接下來我們要分 30 個階段，用 Python 在本機建立一份「台股分析 Excel 系統」（stock_system.xlsx）。請遵守以下規則：
 1. 每次只做我貼給你的那一個階段，不要提前做後面的功能。
 2. 程式與註解使用繁體中文說明，Excel 工作表名稱、欄位名稱一律用繁體中文。
@@ -98,7 +96,7 @@ claude</pre>
   <div id="list"></div>
 </main>
 <footer>設計：智慧未來領袖學苑｜LINE ID：snake0203cheng<br>本工具僅供教學練習，不構成任何投資建議。</footer>
-<div class="toast" id="toast">已複製，貼到 Claude Code 吧！</div>
+<div class="toast" id="toast">已複製，貼到 AI 工具吧！</div>
 
 <script>
 const PHASES = [
@@ -111,15 +109,15 @@ const PHASES = [
 ];
 
 const S = [
-/* 1 */ {t:"下載並確認專案資料夾", g:"下載開場資料夾，解壓後用 Claude Code 打開，不用手動建資料夾。",
+/* 1 */ {t:"下載並確認專案資料夾", g:"下載開場資料夾，解壓後用 AI 工具打開，不用手動建資料夾，也不用終端機。",
 p:`【階段 1／30：確認專案資料夾】
-我已經下載並解壓縮開場資料夾 stock-excel-system，並在這個資料夾裡啟動 Claude Code。請：
-- 讀取 CLAUDE.md 的 10 條規則，之後每個階段都要遵守
-- 用樹狀圖列出資料夾結構，確認有：CLAUDE.md、README.md、.gitignore、data/、scripts/、output/、output/backup/、checks/
+我已經下載並解壓縮開場資料夾 stock-excel-system，並用 AI 工具打開了這個資料夾。請：
+- 讀取 AGENTS.md 的 10 條規則，之後每個階段都要遵守
+- 用樹狀圖列出資料夾結構，確認有：AGENTS.md、CLAUDE.md、GEMINI.md、README.md、.gitignore、data/、scripts/、output/、output/backup/、checks/
 - 如果少了哪個資料夾或檔案，就補建，並告訴我補了什麼
 - 這個階段不要寫任何 Python 程式
 完成後回覆「準備好了」，並列出資料夾結構。`,
-c:"Claude Code 回覆「準備好了」，樹狀圖裡 8 個項目都在"},
+c:"AI 回覆「準備好了」，樹狀圖裡 10 個項目都在"},
 
 /* 2 */ {t:"建立 Python 虛擬環境", g:"避免套件互相打架，每個專案獨立。",
 p:`【階段 2／30：建立 Python 虛擬環境】
@@ -487,7 +485,7 @@ function render(){
       card.innerHTML = `
         <div class="top"><div class="num">${i}</div><h3>${esc(s.t)}</h3></div>
         <p class="goal">${esc(s.g)}</p>
-        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794964113" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
+        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794965051" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
         <pre id="p${i}">${esc(s.p)}</pre>
         <div class="check">✔ 完成檢查：${esc(s.c)}</div>
         <div class="actions">
@@ -535,7 +533,7 @@ document.addEventListener("click", async e=>{
   if(ok){
     const old = b.textContent; b.textContent = "✓ 已複製"; b.classList.add("ok");
     setTimeout(()=>{ b.textContent = old; b.classList.remove("ok"); }, 1400);
-    showToast("已複製，貼到 Claude Code 吧！");
+    showToast("已複製，貼到 AI 工具吧！");
   }else{
     const r = document.createRange(); r.selectNodeContents(document.getElementById(b.dataset.target));
     const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
