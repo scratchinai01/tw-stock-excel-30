@@ -72,7 +72,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px}
   <div class="rule">
     <h2>⓪ 開場：下載專案資料夾（規則已內建）</h2>
     <p>資料夾和 10 條規則都已經準備好，學員不用手動建資料夾，也不用先貼規則。</p>
-    <a class="dl" href="https://tw-stock-excel-30.web.app/starter/tw-stock-excel-starter.zip" download>⬇ 下載開場資料夾（zip）</a>
+    <a class="dl" href="https://tw-stock-excel-30.web.app/starter/tw-stock-excel-starter.zip" target="_blank" rel="noopener">⬇ 下載開場資料夾（zip）</a>
     <ol class="steps"><li>按上方按鈕下載 <b>tw-stock-excel-starter.zip</b></li><li>雙擊解壓縮，把 <b>stock-excel-system</b> 資料夾放到桌面</li><li>打開終端機，輸入下面的指令，啟動 Claude Code</li><li>複製貼上「階段 1」卡片，Claude Code 會讀取 CLAUDE.md 的規則並回覆「準備好了」</li></ol>
     <pre class="cmd">cd ~/Desktop/stock-excel-system
 claude</pre>
@@ -487,7 +487,7 @@ function render(){
       card.innerHTML = `
         <div class="top"><div class="num">${i}</div><h3>${esc(s.t)}</h3></div>
         <p class="goal">${esc(s.g)}</p>
-        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794964019" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
+        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794964113" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
         <pre id="p${i}">${esc(s.p)}</pre>
         <div class="check">✔ 完成檢查：${esc(s.c)}</div>
         <div class="actions">
