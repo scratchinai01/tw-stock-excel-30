@@ -50,6 +50,10 @@ pre{margin:0;white-space:pre-wrap;word-break:break-word;background:#faf9f6;borde
 footer{text-align:center;color:var(--muted);font-size:13px;padding:20px}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:var(--ink);color:#fff;padding:9px 18px;border-radius:99px;font-size:14px;transition:transform .25s;z-index:9}
 .toast.show{transform:translateX(-50%) translateY(0)}
+.dl{display:block;text-align:center;background:var(--down);color:#fff;text-decoration:none;font-weight:900;font-size:17px;padding:13px;border-radius:12px;margin:4px 0 12px}
+.steps{margin:0 0 10px;padding-left:22px;font-size:14.5px;line-height:1.8}
+.cmd{background:#1f2328!important;color:#e6edf3;border:0!important;font-family:ui-monospace,Menlo,monospace!important}
+.small{font-size:13px;color:#3b4552;margin:6px 0}
 </style>
 </head>
 <body>
@@ -66,9 +70,15 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px}
   </div>
 
   <div class="rule">
-    <h2>⓪ 開場規則卡（第一次對話先貼這張）</h2>
-    <p>讓 Claude Code 每一階段都照同樣的節奏做，比較好教也好除錯。</p>
+    <h2>⓪ 開場：下載專案資料夾（規則已內建）</h2>
+    <p>資料夾和 10 條規則都已經準備好，學員不用手動建資料夾，也不用先貼規則。</p>
+    <a class="dl" href="https://tw-stock-excel-30.web.app/starter/tw-stock-excel-starter.zip" download>⬇ 下載開場資料夾（zip）</a>
+    <ol class="steps"><li>按上方按鈕下載 <b>tw-stock-excel-starter.zip</b></li><li>雙擊解壓縮，把 <b>stock-excel-system</b> 資料夾放到桌面</li><li>打開終端機，輸入下面的指令，啟動 Claude Code</li><li>複製貼上「階段 1」卡片，Claude Code 會讀取 CLAUDE.md 的規則並回覆「準備好了」</li></ol>
+    <pre class="cmd">cd ~/Desktop/stock-excel-system
+claude</pre>
+    <p class="small">Windows 的終端機輸入：<code>cd %USERPROFILE%\Desktop\stock-excel-system</code>，再輸入 <code>claude</code>。</p>
     <img src="images/rules.jpg" alt="開場規則卡圖解：10 條規則" style="display:block;width:100%;height:auto;border-radius:12px;border:1px solid #cfdcee;margin:0 0 12px">
+    <p class="small" style="margin-top:12px">資料夾裡的 <b>CLAUDE.md</b> 已經寫好下面 10 條規則，Claude Code 會自動讀取。改用 Antigravity、Gemini 等其他工具時，才需要複製這段規則貼上。</p>
     <pre id="rule-text">接下來我們要分 30 個階段，用 Python 在本機建立一份「台股分析 Excel 系統」（stock_system.xlsx）。請遵守以下規則：
 1. 每次只做我貼給你的那一個階段，不要提前做後面的功能。
 2. 程式與註解使用繁體中文說明，Excel 工作表名稱、欄位名稱一律用繁體中文。
@@ -101,15 +111,15 @@ const PHASES = [
 ];
 
 const S = [
-/* 1 */ {t:"建立專案資料夾", g:"先把專案的家蓋好，還不寫程式。",
-p:`【階段 1／30：建立專案資料夾】
-請在目前資料夾建立「台股分析 Excel 系統」專案：
-- 建立資料夾：data/（放股價 CSV）、scripts/（放 Python 程式）、output/（放產生的 Excel）、output/backup/（自動備份）、checks/（放檢查用的程式）
-- 建立 README.md，寫下專案目標：用 Python 抓台股資料，產生 output/stock_system.xlsx，內含股價、技術指標、圖表、儀表板與回測
-- README 加一段「設計原則」：Excel 一律由 scripts/build_workbook.py 從頭重建，不用 load_workbook 讀進既有檔案再存檔（openpyxl 不會保留原有圖表）
+/* 1 */ {t:"下載並確認專案資料夾", g:"下載開場資料夾，解壓後用 Claude Code 打開，不用手動建資料夾。",
+p:`【階段 1／30：確認專案資料夾】
+我已經下載並解壓縮開場資料夾 stock-excel-system，並在這個資料夾裡啟動 Claude Code。請：
+- 讀取 CLAUDE.md 的 10 條規則，之後每個階段都要遵守
+- 用樹狀圖列出資料夾結構，確認有：CLAUDE.md、README.md、.gitignore、data/、scripts/、output/、output/backup/、checks/
+- 如果少了哪個資料夾或檔案，就補建，並告訴我補了什麼
 - 這個階段不要寫任何 Python 程式
-完成後用樹狀圖列出資料夾結構給我看。`,
-c:"看得到 data、scripts、output（含 backup）、checks 資料夾和 README.md"},
+完成後回覆「準備好了」，並列出資料夾結構。`,
+c:"Claude Code 回覆「準備好了」，樹狀圖裡 8 個項目都在"},
 
 /* 2 */ {t:"建立 Python 虛擬環境", g:"避免套件互相打架，每個專案獨立。",
 p:`【階段 2／30：建立 Python 虛擬環境】
@@ -477,7 +487,7 @@ function render(){
       card.innerHTML = `
         <div class="top"><div class="num">${i}</div><h3>${esc(s.t)}</h3></div>
         <p class="goal">${esc(s.g)}</p>
-        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794739459" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
+        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794964019" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
         <pre id="p${i}">${esc(s.p)}</pre>
         <div class="check">✔ 完成檢查：${esc(s.c)}</div>
         <div class="actions">
