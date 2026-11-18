@@ -72,8 +72,8 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px}
   <div class="rule">
     <h2>⓪ 開場：下載專案資料夾（規則已內建）</h2>
     <p>資料夾和 10 條規則都已經準備好，學員不用手動建資料夾，也不用先貼規則。</p>
-    <a class="dl" href="https://tw-stock-excel-30.web.app/starter/tw-stock-excel-starter.zip?v=2" target="_blank" rel="noopener">⬇ 下載開場資料夾（zip）</a>
-    <ol class="steps"><li>按上方綠色按鈕，下載 <b>tw-stock-excel-starter.zip</b></li><li>解壓縮：Mac 在 zip 上<b>點兩下</b>；Windows 在 zip 上按右鍵 →「<b>全部解壓縮</b>」。把解出來的 <b>stock-excel-system</b> 資料夾放到桌面</li><li>用你的 AI 工具<b>打開這個資料夾</b>：Antigravity 選「File」→「Open Folder」；Codex、Claude Code 選擇這個資料夾作為工作資料夾</li><li>複製貼上「階段 1」卡片，AI 會讀取規則並回覆「準備好了」</li></ol>
+    <a class="dl" href="https://tw-stock-excel-30.web.app/starter/tw-stock-excel-starter.zip?v=3" target="_blank" rel="noopener">⬇ 下載開場資料夾（zip）</a>
+    <ol class="steps"><li>按上方綠色按鈕，下載 <b>tw-stock-excel-starter.zip</b></li><li>解壓縮：Mac 在 zip 上<b>點兩下</b>；Windows 在 zip 上按右鍵 →「<b>全部解壓縮</b>」。把解出來的 <b>stock-excel-system</b> 資料夾放到桌面。裡面的「範例」資料夾有完成版 Excel，可以先打開看看最後的樣子</li><li>用你的 AI 工具<b>打開這個資料夾</b>：Antigravity 選「File」→「Open Folder」；Codex、Claude Code 選擇這個資料夾作為工作資料夾</li><li>複製貼上「階段 1」卡片，AI 會讀取規則並回覆「準備好了」</li></ol>
     <p class="small">全程不需要終端機。之後需要執行的指令，都會由 AI 代為執行。</p>
     <img src="images/overview.jpg" alt="成果總覽：用 AI Agent 做出台股分析 Excel 系統，學到的 Excel 功能與系統能做到的事" style="display:block;width:100%;height:auto;border-radius:12px;border:1px solid #cfdcee;margin:0 0 12px">
     <p class="small" style="margin-top:12px">資料夾裡的 <b>AGENTS.md</b>、<b>CLAUDE.md</b>、<b>GEMINI.md</b> 都已經寫好下面 10 條規則（內容相同，給不同 AI 工具讀取），階段 1 也會請 AI 主動讀一次。萬一你的工具沒照規則做，再複製這段規則貼上。</p>
@@ -485,7 +485,7 @@ function render(){
       card.innerHTML = `
         <div class="top"><div class="num">${i}</div><h3>${esc(s.t)}</h3></div>
         <p class="goal">${esc(s.g)}</p>
-        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794965800" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
+        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794966484" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
         <pre id="p${i}">${esc(s.p)}</pre>
         <div class="check">✔ 完成檢查：${esc(s.c)}</div>
         <div class="actions">
