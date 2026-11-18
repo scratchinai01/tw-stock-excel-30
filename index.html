@@ -54,6 +54,10 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px}
 .steps{margin:0 0 10px;padding-left:22px;font-size:14.5px;line-height:1.8}
 .cmd{background:#1f2328!important;color:#e6edf3;border:0!important;font-family:ui-monospace,Menlo,monospace!important}
 .small{font-size:13px;color:#3b4552;margin:6px 0}
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px;font-size:14px}
+.tools b:first-child{width:100%}
+.tools a{flex:1 1 200px;background:#fff;border:1px solid #cfdcee;border-radius:10px;padding:8px 12px;color:var(--accent);text-decoration:none}
+.tools a span{display:block;font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -72,6 +76,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding:20px}
   <div class="rule">
     <h2>⓪ 開場：下載專案資料夾（規則已內建）</h2>
     <p>資料夾和 10 條規則都已經準備好，學員不用手動建資料夾，也不用先貼規則。</p>
+    <div class="tools"><b>還沒安裝 AI 工具？先安裝其中一個：</b><a href="https://antigravity.google/download" target="_blank" rel="noopener"><b>Antigravity</b>（Google）<span>需要 Google 帳號・Mac／Windows</span></a><a href="https://developers.openai.com/codex/app" target="_blank" rel="noopener"><b>Codex</b>（OpenAI）<span>需要 ChatGPT 帳號・Mac／Windows</span></a></div>
     <a class="dl" href="https://tw-stock-excel-30.web.app/starter/tw-stock-excel-starter.zip?v=3" target="_blank" rel="noopener">⬇ 下載開場資料夾（zip）</a>
     <ol class="steps"><li>按上方綠色按鈕，下載 <b>tw-stock-excel-starter.zip</b></li><li>解壓縮：Mac 在 zip 上<b>點兩下</b>；Windows 在 zip 上按右鍵 →「<b>全部解壓縮</b>」。把解出來的 <b>stock-excel-system</b> 資料夾放到桌面。裡面的「範例」資料夾有完成版 Excel，可以先打開看看最後的樣子</li><li>用你的 AI 工具<b>打開這個資料夾</b>：Antigravity 選「File」→「Open Folder」；Codex、Claude Code 選擇這個資料夾作為工作資料夾</li><li>複製貼上「階段 1」卡片，AI 會讀取規則並回覆「準備好了」</li></ol>
     <p class="small">全程不需要終端機。之後需要執行的指令，都會由 AI 代為執行。</p>
@@ -485,7 +490,7 @@ function render(){
       card.innerHTML = `
         <div class="top"><div class="num">${i}</div><h3>${esc(s.t)}</h3></div>
         <p class="goal">${esc(s.g)}</p>
-        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794967319" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
+        ${IMGS.includes(i) ? `<img src="images/s${String(i).padStart(2,"0")}.jpg?v=1794968363" alt="階段 ${i} 圖解" loading="lazy" style="display:block;width:100%;height:auto;border-radius:10px;border:1px solid #e4e0d6">` : ""}
         <pre id="p${i}">${esc(s.p)}</pre>
         <div class="check">✔ 完成檢查：${esc(s.c)}</div>
         <div class="actions">
